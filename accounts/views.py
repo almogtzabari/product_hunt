@@ -4,21 +4,21 @@ from django.contrib import auth
 
 
 def signup(request):
-    # User is trying to sign up
+    # Check if user is trying to sign up
     if request.method == 'POST':
-
+        username = request.POST['username']
+        pw1 = request.POST['password1']
+        pw2 = request.POST['password2']
         # Check if passwords match
-        if request.POST['password1'] == request.POST['password2']:
-
+        if pw1 == pw2:
             # Check if user already exists
             try:
-                user = User.objects.get(username=request.POST['username'])
+                User.objects.get(username=username)
             except User.DoesNotExist:
-                user = User.objects.create_user(username=request.POST['username'], password=request.POST['password1'])
+                user = User.objects.create_user(username=username, password=pw1)
                 auth.login(request, user)
                 return redirect('home')
-
-            return render(request, 'accounts/signup.html', {'error': 'Username has already been taken!'})
+            return render(request, 'accounts/signup.html', {'error': f'Username "{username}" has already been taken!'})
 
         else:
             # Passwords does not match
@@ -28,10 +28,25 @@ def signup(request):
 
 
 def login(request):
-    return render(request, 'accounts/login.html')
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            auth.login(request, user)
+            return redirect('home')
+        else:
+            # Incorrect username or password
+            return render(request, 'accounts/login.html', {'error': 'Username and/or password are incorrect!'})
+
+    else:
+        return render(request, 'accounts/login.html')
 
 
 def logout(request):
-    pass
+    if request.method == 'POST':
+        auth.logout(request)
+        return redirect('home')
+
 
 
